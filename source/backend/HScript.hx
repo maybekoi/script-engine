@@ -12,19 +12,64 @@ import flixel.FlxSprite;
 import flixel.text.FlxText;
 import Sys;
 
+class CustomParser extends Parser {
+    public function new() {
+        super();
+        this.allowTypes = true;
+        this.allowJSON = true;
+        this.allowMetadata = true;
+    }
+
+    override function parseStructure(id:String):Null<hscript.Expr> {
+        if (id == "class") {
+            var name = token();
+            switch(name) {
+                case TId(n):
+                case _: unexpected(name);
+            }
+            
+            var extend = null;
+            var tk = token();
+            switch(tk) {
+                case TId("extends"):
+                    tk = token();
+                    switch(tk) {
+                        case TId(n): extend = n;
+                        case _: unexpected(tk);
+                    }
+                case _: 
+                    push(tk);
+            }
+            
+            ensure(TBrOpen);
+            var fields = [];
+            while(true) {
+                tk = token();
+                if (tk == TBrClose) break;
+                push(tk);
+                var expr = parseExpr();
+                if (expr == null) continue;
+                fields.push(expr);
+                tk = token();
+                if (tk != TSemicolon)
+                    push(tk);
+            }
+            
+            return EBlock(fields);
+        }
+        return super.parseStructure(id);
+    }
+}
+
 class HScript
 {
-    public var parser:Parser;
+    public var parser:CustomParser;
     public var interp:Interp;
     public var variables:Map<String, Dynamic>;
 
     public function new()
     {
-        parser = new Parser();
-        parser.allowTypes = true;
-        parser.allowJSON = true;
-        parser.allowMetadata = true;
-
+        parser = new CustomParser();
         interp = new Interp();
         variables = new Map();
 
