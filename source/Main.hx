@@ -2,26 +2,31 @@ package;
 
 import flixel.FlxGame;
 import openfl.display.Sprite;
-import states.InitState;
+import backend.HScript;
+import backend.ScriptedState;
+import lime.app.Application;
 
 class Main extends Sprite
 {
-	var config = {
-		width: 1280, // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
-		height: 720, // Height of the game in pixels (might be less / more in actual pixels depending on your zoom).
-		zoom: -1.0, // If -1, zoom is automatically calculated to fit the window dimensions. (Removed from Flixel 5.0.0)
-		framerate: 60, // How many frames per second the game should run at.
-		initialState: InitState, // is the state in which the game will start.
-		skipSplash: false, // Whether to skip the flixel splash screen that appears in release mode.
-		startFullscreen: false // Whether to start the game in fullscreen on desktop targets'
-	};
+    private var script:HScript;
 
-	// You can pretty much ignore everything from here on - your code should go in your states.
-
-	public function new()
-	{
-		super();
-		addChild(new FlxGame(config.width, config.height, config.initialState, #if (flixel < "5.0.0") config.zoom, #end config.framerate, config.framerate,
-			config.skipSplash, config.startFullscreen));
-	}
+    public function new()
+    {
+        super();
+        
+        script = new HScript();
+        script.set("Sprite", Sprite);
+        script.set("FlxGame", FlxGame);
+        script.set("ScriptedState", ScriptedState);
+        script.set("Application", Application);
+        script.set("this", this);
+        
+        if (script.load("source/Main.hx")) {
+            script.call("new");
+            var game = script.call("getGame");
+            if (game != null) {
+                addChild(game);
+            }
+        }
+    }
 }
