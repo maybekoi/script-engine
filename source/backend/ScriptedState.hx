@@ -19,17 +19,18 @@ class ScriptedState extends FlixelState
         trace("ScriptedState: Creating script");
         script = new HScript();
         
+        script.set("script", script);
+        script.set("state", this);
+        script.set("close", close);
+        script.set("switchState", switchState);
+        script.set("FlxG", FlxG);
+        
         if (scriptPath != null) {
             trace("ScriptedState: Loading script from constructor path");
             loadScript(scriptPath);
         }
 
         super.create();
-        
-        trace("ScriptedState: Setting state variable");
-        script.set("state", this);
-        script.set("close", close);
-        script.set("switchState", switchState);
         
         trace("ScriptedState: Calling script create()");
         script.call("create");

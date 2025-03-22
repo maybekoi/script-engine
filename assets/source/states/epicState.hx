@@ -1,8 +1,11 @@
-var sprite:FlxSprite;
-var text:FlxText;
-var elapsed_total:Float = 0;
+import('flixel.FlxG');
+import('flixel.FlxSprite');
+import('flixel.text.FlxText');
 
 class EpicState extends ScriptedState {
+    var sprite:FlxSprite;
+    var text:FlxText;
+    var elapsed_total:Float = 0;
     function create() {    
         sprite = new FlxSprite(100, 100);
         sprite.makeGraphic(50, 50, 0xFFFF0000);
@@ -24,7 +27,7 @@ class EpicState extends ScriptedState {
         
         if (FlxG.keys.justPressed.ENTER) {
             trace("Going to epicStateTwo");
-            var scriptedState = new ScriptedState("assets/data/states/epicStateTwo.hx");
+            var scriptedState = new ScriptedState("source/states/epicStateTwo.hx");
             switchState(scriptedState);
         }
         if (FlxG.keys.justPressed.F1) {

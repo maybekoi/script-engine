@@ -1,3 +1,8 @@
+import('flixel.FlxG');
+import('openfl.display.Sprite');
+import('flixel.FlxGame');
+import('lime.app.Application');
+
 class MainGame {
     var game:FlxGame;
     

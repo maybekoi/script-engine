@@ -11,6 +11,8 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.text.FlxText;
 import Sys;
+import lime.app.Application;
+using StringTools;
 
 class CustomParser extends Parser {
     public function new() {
@@ -21,6 +23,23 @@ class CustomParser extends Parser {
     }
 
     override function parseStructure(id:String):Null<hscript.Expr> {
+        if (id == "import") {
+            ensure(TPOpen);
+            
+            var tk = token();
+            var importPath = "";
+            switch(tk) {
+                case TConst(CString(s)): importPath = s;
+                case _: unexpected(tk);
+            }
+            
+            ensure(TPClose);
+            
+            return ECall(
+                EField(EIdent("script"), "registerImport"),
+                [EConst(CString(importPath))]
+            );
+        }
         if (id == "class") {
             var name = token();
             switch(name) {
@@ -73,23 +92,44 @@ class HScript
         interp = new Interp();
         variables = new Map();
 
+        set("import", function(className:String) {
+            final splitClassName:Array<String> = [for (e in className.split('.')) e.trim()];
+            final fullClassName:String = splitClassName.join('.');
+            final daClass:Class<Dynamic> = Type.resolveClass(fullClassName);
+            final daEnum:Enum<Dynamic> = Type.resolveEnum(fullClassName);
+
+            if (daClass == null && daEnum == null) {
+                var errorMsg = 'HScript Error: Failed to import "$fullClassName" - Class/Enum not found';
+                trace(errorMsg);
+                #if sys
+                Sys.stderr().writeString(errorMsg + "\n");
+                #end
+                throw errorMsg;
+                return false;
+            }
+            else {
+                if (daEnum != null) {
+                    for (constructor in daEnum.getConstructors())
+                        Reflect.setField({}, constructor, daEnum.createByName(constructor));
+                    set(splitClassName[splitClassName.length - 1], {});
+                }
+                else {
+                    set(splitClassName[splitClassName.length - 1], daClass);
+                }
+                return true;
+            }
+        });
+
         setDefaultVariables();
     }
 
     private function setDefaultVariables()
     {
-        // base flixel classez
         set("FlxG", FlxG);
-        set("FlxSprite", FlxSprite);
-        set("FlxText", FlxText);
         set("FlxColor", FlxColorHScript);
-
-        // ScriptedState lol
         set("ScriptedState", ScriptedState);
         set("FlixelState", FlixelState);
-        set("FlixelSubState", FlixelSubState);
-        
-        // other
+        set("FlixelSubState", FlixelSubState);        
         set("Math", Math);
         set("Std", Std);
         set("String", String);
@@ -98,6 +138,10 @@ class HScript
         set("Array", Array);
         set("Bool", Bool);        
         set("trace", Sys.println);
+        set("Date", Date);
+        set("StringTools", StringTools);
+        set("Reflect", Reflect);
+        set("Type", Type);
     }
 
     public function set(name:String, val:Dynamic)
@@ -116,12 +160,14 @@ class HScript
         try
         {
             trace('HScript: Attempting to load script: $path');
-            if (!Assets.exists(path)) {
+            var assetPath = StringTools.replace(path, "assets/", "");
+            
+            if (!Assets.exists(assetPath)) {
+                trace('HScript: Script not found: $assetPath');
                 return false;
             }
             
-            var script:String = Assets.getText(path);
-            
+            var script:String = Assets.getText(assetPath);
             var program = parser.parseString(script);
             
             interp.execute(program);
@@ -156,10 +202,7 @@ class HScript
                     trace('HScript: Error calling $func: $e');
                     trace('HScript: Stack trace: ${e.stack}');
                 }
-            } else {
-                // pee
             }
-        } else {
         }
         return null;
     }
@@ -179,5 +222,22 @@ class HScript
         }
         
         parser = null;
+    }
+
+    public function registerImport(path:String) {
+        var parts = path.split(".");
+        var className = parts.pop();
+        var packagePath = parts.join(".");
+        
+        try {
+            var cl = Type.resolveClass(path);
+            if (cl != null) {
+                set(className, cl);
+                return true;
+            }
+        } catch(e) {
+            trace('HScript: Error importing $path: $e');
+        }
+        return false;
     }
 }

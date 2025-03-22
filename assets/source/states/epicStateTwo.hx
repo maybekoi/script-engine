@@ -1,3 +1,6 @@
+import('flixel.FlxSprite');
+import('flixel.text.FlxText');
+
 class EpicStateTwo extends ScriptedState {
     var text:FlxText;
     var elapsed_total:Float = 0;
@@ -15,7 +18,7 @@ class EpicStateTwo extends ScriptedState {
         elapsed_total += elapsed;
         
         if (FlxG.keys.justPressed.ESCAPE) {
-            var scriptedState = new ScriptedState("assets/data/states/epicState.hx");
+            var scriptedState = new ScriptedState("source/states/epicState.hx");
             switchState(scriptedState);
         }
         if (FlxG.keys.justPressed.F1) {

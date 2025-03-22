@@ -15,11 +15,14 @@ class Main extends Sprite
         super();
         
         script = new HScript();
+        
         script.set("Sprite", Sprite);
         script.set("FlxGame", FlxGame);
         script.set("ScriptedState", ScriptedState);
         script.set("Application", Application);
         script.set("this", this);
+        
+        script.set("script", script);
         
         if (script.load("source/Main.hx")) {
             script.call("new");
